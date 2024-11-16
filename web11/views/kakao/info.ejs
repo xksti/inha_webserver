@@ -1,0 +1,90 @@
+<style>
+    i {
+        color:red;
+        font-size: 30px;
+        cursor: pointer;
+    }
+</style>
+<div class="my-5 row justify-content-center">
+    <h1 class="text-center mb-5"><%=title%></h1>
+    <div class="card">
+        <div class="card-body row">
+            <div class="col-md-4">
+                <img src="<%=info.thumbnail%>" width="90%">
+            </div>
+            <div class="col">
+                <h5>
+                    <%=info.title%>
+                    <i class="bi-heart" id="heart"></i>
+                </h5>
+                <hr>
+                <div class="mb-3">가격 : <%=info.price%></div>
+                <div class="mb-3">저자 : <%=info.authors%></div>
+                <div class="mb-3">출판사 : <%=info.publisher%></div>
+                <div class="mb-3">ISBN : <%=info.isbn%></div>
+                <div class="my-3">
+                    <button class="btn btn-success px-5 cart">장바구니</button>
+                    <button class="btn btn-warning px-5">바로구매</button>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div><%=info.contents%></div>
+    </div>
+</div>
+<%-include("review.ejs")%>
+<script type="module">
+    import { app } from '/javascripts/config.js';
+    import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+    const db = getDatabase(app);
+
+    const isbn = "<%=info.isbn%>";
+    const title="<%=info.title%>";
+    const price = "<%=info.price%>";
+    const thumbnail = "<%=info.thumbnail%>";
+    const authors = "<%=info.authors%>";
+    const publisher = "<%=info.publisher%>";
+    const contents = "<%=info.contents%>";
+    const info={isbn, title, price, thumbnail, authors, publisher, contents};
+    console.log(info);
+
+
+    $(".cart").on("click", async function(){
+        if(email){
+            const ref_cart = ref(db, `cart/${uid}/${isbn}`);
+            const snapshot = await get(ref_cart);
+            if(snapshot.val()){
+                alert("이미 장바구니에 있는 도서입니다.")
+            }else{
+                set(ref_cart, info);
+                alert("장바구니에 추가되었습니다.");
+            }
+        } else {
+            sessionStorage.setItem("target", window.location.href);
+            location.href="/users/login"
+        }
+    });
+
+    $("#heart").on("click", function(){
+        if($(this).attr("class")=="bi-heart"){
+            if(confirm("좋아요 표시 하겠습니까?")){
+                set(ref(db, `favorite/${uid}/${isbn}`), {title});
+            }
+        } else {
+            if(confirm("좋아요를 취소하시겠습니까?")){
+                remove(ref(db, `favorite/${uid}/${isbn}`))
+            }
+        }
+    });
+
+    onValue(ref(db, `favorite/${uid}/${isbn}`), snapshot => {
+        // console.log(snapshot);
+        if(uid && snapshot.size==0){
+            $("#heart").removeClass("bi-heart-fill");
+            $("#heart").addClass("bi-heart");
+        } else if(uid && snapshot.size==1){
+            $("#heart").removeClass("bi-heart");
+            $("#heart").addClass("bi-heart-fill");
+        }
+    });
+</script>

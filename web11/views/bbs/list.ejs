@@ -1,0 +1,54 @@
+<div class="my-5">
+    <h1 class="text-center mb-5"><%=title%></h1>
+    <div class="text-end">
+        <button id="writer" class="btn btn-primary px-5 mb-5">글쓰기</button>
+        <div id="div_bbs"></div>
+    </div>
+</div>
+<script id="temp_bbs" type="x-handlebars-template">
+    <table class="table table-hover table-striped">
+        <tr>
+            <td>No.</td>
+            <td>Title</td>
+            <td>Writter</td>
+            <td>Date</td>
+        </td>
+        {{#each .}}
+            <tr>
+                <td>{{no}}</td>
+                <td>{{title}}</td>
+                <td>{{email}}</td>
+                <td>{{date}}</td>
+            </tr>
+        {{/each}}
+    </table>
+</script>
+
+
+
+<script type="module">
+    import { app } from '/javascripts/config.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot } from  "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    const db = getFirestore(app);
+
+    const q = query(collection(db, "bbs"), orderBy("date", "desc"));
+    const rows = [];
+    onSnapshot(q, snapshot=>{
+        let no = 1;
+        // console.log(snapshot);
+        snapshot.forEach(row=>{
+            rows.push({no:no++, id:row.id, ...row.data()});
+        });
+        const temp = Handlebars.compile($("#temp_bbs").html());
+        $("#div_bbs").html(temp(rows));
+    });
+
+    $("#writer").on("click", function(){
+        if(email){
+            location.href="/bbs/insert"
+        } else {
+            sessionStorage.setItem("target", "/bbs/insert");
+            location.href="/users/login"
+        }
+    });
+</script>
